@@ -4,8 +4,6 @@ Automatically spread qBittorrent downloads across as many hard drives as you hav
 
 If you have two, five, or ten drives full of shows and movies, this picks which drive each new download goes to so you stop thinking about free space.
 
-There are fancier ways to do this (mergerfs, ZFS, Unraid). This one is small, does one job, and refuses to fill a disk all the way up.
-
 ## Requirements
 
 - Jellyfin or Plex to watch
@@ -14,31 +12,16 @@ There are fancier ways to do this (mergerfs, ZFS, Unraid). This one is small, do
 - Python 3.10+
 - More than one hard drive for downloads
 
-Sonarr must label its downloads `tv` and Radarr must label its `movies` in qBittorrent. Those are the only two labels the router manages. Test with one episode first: the router deletes the download torrent and its files after import (see below), so don't start with something you need to keep seeding.
-
-## A simple example
-
-Say you have two drives.
-
-1. A new episode comes in. The router checks real free space on each drive.
-2. It sends the download to the drive with room, into that drive's TV folder.
-3. Sonarr adds it to your show library when it's done.
-4. The router deletes the leftover download copy so the drive frees back up.
-
-Movies work the same way, just in a movies folder.
-
-You watch in Jellyfin/Plex like normal. You never pick a drive by hand.
+Sonarr must label its downloads `tv` and Radarr must label its `movies` in qBittorrent. Those are the only two labels the router manages.
 
 ## Safety features
 
-- **Leaves breathing room.** Each drive keeps a reserve you set, like 50 GB. Downloads already in progress count too, so adding ten at once can't oversell one drive.
-- **Waits when full.** If nothing fits, the download stays stopped until space frees up. It never squeezes a file onto a full disk.
+- **Leaves breathing room.** Each drive keeps a reserve you set, like 50 GB. Downloads already in progress count too.
+- **Waits when full.** If nothing fits, the download stays stopped until space frees up.
 - **Magnets are handled.** Magnets arrive with unknown size, so the router checks the size first on a staging drive, then places them like normal files.
 - **Cleans up only after import.** After Sonarr/Radarr hardlinks the file into your library, the router stops the torrent, waits out a grace period, checks the download is gone from both Arr queues, then deletes the torrent and its download files. The library copy stays. Items that never import are stopped for you to check, never auto-deleted.
-- **Stops instead of guessing.** Missing drive, wrong folder, or changed Sonarr/Radarr settings? It stops downloads rather than putting files in the wrong place.
-
-If downloads suddenly all stop, that is usually the router protecting you. See below.
-
+- **Stops instead of guessing.** Missing drive, wrong folder, or changed Sonarr/Radarr settings? It stops.
+  
 ## Setup
 
 ```bash
@@ -74,9 +57,9 @@ The router expects new torrents to arrive stopped, with automatic management off
 
 ## Config: listing your drives
 
-All you normally edit is `/etc/qbit-storage-router.json`. Start from the included example, which lists two drives. To add a drive, copy one of the blocks you already have and change the names and paths. Leave `"version": 1` alone — anything else refuses to start.
+All you edit is `/etc/qbit-storage-router.json`. Start from the included example, which lists two drives. To add a drive, copy one of the blocks you already have and change the names and paths. Leave `"version": 1` alone — anything else refuses to start.
 
-### Paths: separate drives vs the pool
+### Paths: separate drives vs mergerfs pools, RAID, zfs etc
 
 - **Separate drives are where downloads go.** Each drive is its own filesystem with the same folder layout underneath, for example `downloads/tv` for shows and `downloads/movies` for movies.
 - **The pool is the combined view.** For example `/mnt/pool` merges all drives so Jellyfin/Plex and the Arrs can read everything in one place. The router never downloads to the pool. It only checks the pool is mounted, then always writes to one separate drive.
@@ -126,8 +109,6 @@ Each drive needs:
 - `route_headroom_bytes`: extra buffer on drives that also hold apps or configs. Usually `0` except on crowded drives.
 - `policy` at the top: `most_free` means always use the emptiest drive, `first_fit` means fill drives in order. Anything else refuses to start.
 
-Each drive must be its own separate hard drive, not two folders on the same disk.
-
 ## If downloads all stop
 
 Look in this order:
@@ -139,15 +120,5 @@ Look in this order:
    - `route_error` — folder or label doesn't match the config. Usually fixed by letting the router move it, or by re-checking your config.
    - `route_imported` / `route_import_failed` — finished, waiting for Sonarr/Radarr to finish adding it to your library.
 3. Common causes: a drive unmounted, you changed a qBittorrent save path or category, or you changed a Sonarr/Radarr download client, path mapping, or turned off hardlinks.
-
-Fix the cause, the router resumes by itself. You don't need to force-start things — that just fights it.
-
-## Files
-
-```text
-qbit-storage-router.py          # the router, Python stdlib only
-qbit-storage-router.service     # runs it in the background
-qbit-storage-router.json.example # copy this to /etc/qbit-storage-router.json
-```
 
 License: MIT. See `LICENSE`.

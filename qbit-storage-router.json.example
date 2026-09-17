@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "policy": "most_free",
+  "metadata_branch": "drive-a",
+  "branches": [
+    {
+      "name": "drive-a",
+      "tag": "route_drive-a",
+      "host_root": "/mnt/drive-a",
+      "mount_root": "/mnt/drive-a",
+      "qbit_prefix": "/qbit/drive-a",
+      "reserve_bytes": 53687091200,
+      "route_headroom_bytes": 0
+    },
+    {
+      "name": "drive-b",
+      "tag": "route_drive-b",
+      "host_root": "/mnt/drive-b",
+      "mount_root": "/mnt/drive-b",
+      "qbit_prefix": "/qbit/drive-b",
+      "reserve_bytes": 53687091200,
+      "route_headroom_bytes": 0
+    }
+  ]
+}

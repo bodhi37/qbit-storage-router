@@ -1,0 +1,38 @@
+[Unit]
+Description=qBittorrent expandable storage-pool router
+# Add your pool branches and pool mount here, e.g.:
+# RequiresMountsFor=/mnt/drive-a /mnt/drive-b /mnt/pool
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/local/lib/qbit-storage-router.py
+Restart=always
+RestartSec=3
+User=root
+Group=root
+UMask=0077
+Environment=QBIT_STORAGE_ROUTER_CONFIG=/etc/qbit-storage-router.json
+Environment=METADATA_DL_LIMIT=524288
+Environment=METADATA_CLEANUP_LIMIT=67108864
+Environment=ARR_AUDIT_INTERVAL=15
+Environment=IMPORT_SETTLE_SECONDS=300
+Environment=IMPORT_CHECK_INTERVAL=5
+Environment=IMPORT_CLEANUP_GRACE_SECONDS=600
+# Override when your Arr config.xml files live elsewhere:
+# Environment=QBIT_ROUTER_SONARR_CONFIG=/mnt/drive-a/configs/sonarr/config.xml
+# Environment=QBIT_ROUTER_RADARR_CONFIG=/mnt/drive-a/configs/radarr/config.xml
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+# Allow writes only to your download dirs, e.g.:
+# ReadWritePaths=/mnt/drive-a/downloads /mnt/drive-b/downloads
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target
